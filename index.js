@@ -8,17 +8,18 @@ const ENV_FILE = path.join(__dirname, '.env');
 dotenv.config({ path: ENV_FILE });
 const client = require("twilio")(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
-const { BotFrameworkAdapter, UserState, MemoryStorage } = require('botbuilder');
+const { BotFrameworkAdapter, UserState, MemoryStorage, ConversationState } = require('botbuilder');
 const { DirectLine } = require('botframework-directlinejs');
 const { WelcomeBot } = require('./bots/mainBot');
+const { MainDialog } = require('./dialogs/mainDialogs');
 
 const app = express()
 const port = process.env.port || process.env.PORT || 3978
 
 
+storageTemp = []
 
-
-app.get('/', (req, res) => res.send('Hello World!'))
+app.get('/', (req, res) => res.send(`<iframe src='https://webchat.botframework.com/embed/flask-sample-mongo-bot?s=${process.env.BotSecretID}'  style='min-width: 400px; width: 100%; min-height: 500px;'></iframe>)`));
 
 const adapter = new BotFrameworkAdapter({
     appId: process.env.MicrosoftAppId,
@@ -38,10 +39,11 @@ adapter.onTurnError = async (context, error) => {
 };
 
 const memoryStorage = new MemoryStorage();
+const conversationState = new ConversationState(memoryStorage);
 const userState = new UserState(memoryStorage);
 
-
-const myBot = new WelcomeBot(userState);
+const maindialog = new MainDialog(userState);
+const myBot = new WelcomeBot(conversationState, userState, maindialog);
 
 
 
@@ -68,10 +70,11 @@ const goodBoyUrl = 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d
 
 app.post('/whatsapp', async (req, res) => {
     try {
-    var directLine = new DirectLine({
-        token: process.env.BotSecretID
-    });
     const { body } = req;
+    var directLine = new DirectLine({
+        token: process.env.BotSecretID,
+        conversationId: storageTemp[body.From] === undefined ? "": storageTemp[body.From].id
+    });
     console.log("POST#WP");
     console.log(body);
     console.log("POST#WP");
@@ -102,7 +105,19 @@ app.post('/whatsapp', async (req, res) => {
                 .filter(activity => activity.type === 'message'&& activity.from.id === process.env.ID_BOT_DIRECT_LINE )
                 .subscribe(
                     message => {
+                        console.log("storageTemp")
+                        console.log(storageTemp)
+                        console.log("storageTemp")
                         myPhone =body.From
+                        if (! (body.From in storageTemp)){
+                            storageTemp[body.From] = {id: message.conversation.id, ultimateMessage: message.id};
+                        }else{
+                            if (storageTemp[body.From].ultimateMessage == message.id){
+                                return 
+                            }else{
+                                storageTemp[body.From].ultimateMessage = message.id
+                            }
+                        }
                         try {
                             console.log("received message ", message);
                             console.log(message.text)

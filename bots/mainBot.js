@@ -1,33 +1,34 @@
 const { ActivityHandler, MessageFactory } = require('botbuilder');
-const WELCOMED_USER = 'welcomedUserProperty';
 class WelcomeBot extends ActivityHandler {
-constructor(userState) {
+    constructor(conversationState, userState, dialog) {
         super();
+        if (!conversationState) throw new Error('[DialogBot]: Missing parameter. conversationState is required');
+        if (!userState) throw new Error('[DialogBot]: Missing parameter. userState is required');
+        if (!dialog) throw new Error('[DialogBot]: Missing parameter. dialog is required')
 
-        this.welcomedUserProperty = userState.createProperty(WELCOMED_USER);
+
+
+        this.conversationState = conversationState;
         this.userState = userState;
+        this.dialog = dialog;
+        this.dialogState = this.conversationState.createProperty("DialogState")
+
+        // this.welcomedUserProperty = userState.createProperty(WELCOMED_USER);
+        // this.userState = userState;
 
         this.onMessage(async (context, next) => {
             console.log("context##onMessage")
             console.log(context.activity)
             console.log(context.activity.membersAdded)
             console.log("context##onMessage")
-
-            const didBotWelcomedUser = await this.welcomedUserProperty.get(context, false);
-            if (didBotWelcomedUser === false) {
-                const userName = context.activity.from.name;
-                await context.sendActivity(`First Message Welcome ${ userName }.!`);
-                await this.welcomedUserProperty.set(context, true);
-            }else{
-                const replyText = `Echo: ${ context.activity.text }`;
-                await context.sendActivity(MessageFactory.text(replyText, replyText));
-            }
+            await this.dialog.run(context,this.dialogState);
             await next();
         });
     }
     async run (context){
         await super.run(context);
-        await this.userState.saveChanges(context);
+        await this.conversationState.saveChanges(context, false);
+        await this.userState.saveChanges(context, false);
     }
 }
 

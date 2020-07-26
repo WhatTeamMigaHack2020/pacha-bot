@@ -20,7 +20,8 @@ class ConsumidorDialog extends ComponentDialog{
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.tipoConsumidorStep.bind(this),
             this.menuDeConsumidor.bind(this),
-            this.finishConsumidorDialog.bind(this),
+            this.menuConsumidorDialog.bind(this),
+            this.recibirPedido.bind(this),
         ]));
         this.initialDialogId = WATERFALL_DIALOG;
     }
@@ -41,9 +42,7 @@ class ConsumidorDialog extends ComponentDialog{
             choices: options
         });
     }
-    async finishConsumidorDialog(stepContext){
-        stepContext.result.value;
-        console.log(stepContext.result.value)
+    async menuConsumidorDialog(stepContext){
         switch(stepContext.result.value){
             case "Ver Pedidos":
                 await stepContext.context.sendActivity('Módulo del proveedor en desarrollo');
@@ -51,9 +50,11 @@ class ConsumidorDialog extends ComponentDialog{
             case "Realizar Pedido":
                 return await stepContext.beginDialog(CONSUMIDOR_REALIZAR_PEDIDO);
         }
-        console.log(stepContext.result)
+    }
+    async recibirPedido(stepContext){
         const tipoConsumidor = stepContext.values.tipoConsumidor;
-        return await stepContext.endDialog(tipoConsumidor)
+        const ubicacion = stepContext.values.ubicacion;
+        return await stepContext.endDialog({tipoConsumidor : tipoConsumidor, ubicacion: ubicacion})
     }
 }
 

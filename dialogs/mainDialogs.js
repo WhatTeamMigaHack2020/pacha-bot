@@ -88,7 +88,8 @@ class MainDialog extends ComponentDialog{
 
     async finalStep(stepContext) {
         const userProfile = stepContext.values.userInfo;
-        userProfile.tipoConsumidor = stepContext.result;
+        userProfile.tipoConsumidor = stepContext.result.tipoConsumidor;
+        userProfile.ubicacion = stepContext.result.ubicacion;
         switch (userProfile.tipo){
             case "Proveedor":
                 await stepContext.context.sendActivity(`Gracias, vuelva prontos ${userProfile.tipo}`);

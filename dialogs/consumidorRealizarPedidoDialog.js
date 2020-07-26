@@ -40,7 +40,7 @@ class ConsumidorRealizarPedidoDialog extends ComponentDialog{
             return await stepContext.endDialog(ubicacion)
         }else{
             await stepContext.context.sendActivity('Ingrese nuevamente');
-            return await stepContext.endDialog();
+            return await stepContext.replaceDialog(CONSUMIDOR_REALIZAR_PEDIDO);
         }
     }
 

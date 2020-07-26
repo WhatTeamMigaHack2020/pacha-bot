@@ -5,7 +5,7 @@ const CONSUMIDOR_DIALOG = "CONSUMIDOR_DIALOG";
 const WATERFALL_DIALOG = "WATERFALL_DIALOG";
 // const TEXT_PROMT = "TEXT_PROMPT"
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
-
+const { ConsumidorRealizarPedidoDialog, CONSUMIDOR_REALIZAR_PEDIDO } = require("./consumidorRealizarPedidoDialog")
 const { formaterTextOptions } =require ("./formaterArray");
 class ConsumidorDialog extends ComponentDialog{
     constructor()
@@ -16,7 +16,7 @@ class ConsumidorDialog extends ComponentDialog{
         this.menuPedidos = ['Realizar Pedido', 'Ver Pedidos'];
 
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
-        // this.addDialog(new ConsumidorRealizarPedidosDialog());
+        this.addDialog(new ConsumidorRealizarPedidoDialog());
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.tipoConsumidorStep.bind(this),
             this.menuDeConsumidor.bind(this),
@@ -43,6 +43,14 @@ class ConsumidorDialog extends ComponentDialog{
     }
     async finishConsumidorDialog(stepContext){
         stepContext.result.value;
+        console.log(stepContext.result.value)
+        switch(stepContext.result.value){
+            case "Ver Pedidos":
+                await stepContext.context.sendActivity('Módulo del proveedor en desarrollo');
+                return await stepContext.next()
+            case "Realizar Pedido":
+                return await stepContext.beginDialog(CONSUMIDOR_REALIZAR_PEDIDO);
+        }
         console.log(stepContext.result)
         const tipoConsumidor = stepContext.values.tipoConsumidor;
         return await stepContext.endDialog(tipoConsumidor)

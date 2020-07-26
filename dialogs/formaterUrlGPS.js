@@ -2,25 +2,46 @@ const https = require('https');
 
 function convertUrlToLatLong(url) {
     return new Promise((resolve,reject)=> {
-        https.get(url, (resp)=> {
-            try {
-                let location = resp.headers.location;
-                let res = location.split("/");
+        try {
+            if(url.includes("@")){
+                let res = url.split("/");
                 let found = res.find(element => element.includes("@"));
                 let foundSplit = found.split(",")
-                console.log(foundSplit)
-                resolve(
-                    {
-                        "Lat": foundSplit[0].replace("@", ""),
-                        "Long": foundSplit[1],
-                        "zPos": foundSplit[2]
+                resolve({
+                    "Lat": foundSplit[0].replace("@", ""),
+                    "Long": foundSplit[1],
+                    "zPos": foundSplit[2]
+                });
+            }else{
+                https.get(url, (resp)=> {
+                    try {
+                        let location = resp.headers.location;
+                        let res = location.split("/");
+                        let found = res.find(element => element.includes("@"));
+                        let foundSplit = found.split(",")
+                        console.log(foundSplit)
+                        resolve(
+                            {
+                                "Lat": foundSplit[0].replace("@", ""),
+                                "Long": foundSplit[1],
+                                "zPos": foundSplit[2]
+                            }
+                        )  
+                    } catch (error) {
+                        resolve (null);
                     }
-                )  
-            } catch (error) {
-                reject (null);
+        
+                }).on("error", (err) => {
+                    console.log(err)
+                    console.log("Error: " + err.message);
+                    resolve (null);
+                  });
             }
 
-        })
+        } catch (error) {
+            console.log(error)
+            resolve(null)
+        }
     })
 }
 async function makeSyncRequest(request, url){
@@ -33,6 +54,15 @@ async function makeSyncRequest(request, url){
     }
 }
 
+function isUrl(urlTest){
+    let url;
+    try {
+        url = new URL(urlTest);
+    } catch (error) {
+    return false;  
+  }
+  return url.protocol === "http:" || url.protocol === "https:";
+}
 
 
 //     https.get(url, (resp) => {
@@ -72,3 +102,4 @@ function convertLatLongToUrl(Lat, Long, zPos) {
 module.exports.convertUrlToLatLong = convertUrlToLatLong
 module.exports.makeSyncRequest = makeSyncRequest
 module.exports.convertLatLongToUrl = convertLatLongToUrl
+module.exports.isUrl = isUrl

@@ -12,6 +12,7 @@ const { BotFrameworkAdapter, UserState, MemoryStorage, ConversationState } = req
 const { DirectLine } = require('botframework-directlinejs');
 const { WelcomeBot } = require('./bots/mainBot');
 const { MainDialog } = require('./dialogs/mainDialogs');
+const {isUrl} = require("./dialogs/formaterUrlGPS")
 const { url } = require('inspector');
 
 const app = express()
@@ -61,7 +62,9 @@ app.post('/api/messages', (req, res) => {
     adapter.processActivity(req, res, async (context) => {
         // Route to main dialog.
         await myBot.run(context);
-        // console.log(await convertUrlToLatLong("https://goo.gl/maps/KuATZiwLLTJeoFsE8"));
+        // console.log("asd");
+        // console.log(await convertUrlToLatLong("https://www.google.com/maps/@-16.4928875,-68.1300009,z20"));
+        // console.log("bcd");
     });
 });
 
@@ -89,8 +92,8 @@ app.post('/whatsapp', async (req, res) => {
         res.send(messageTwilio.toString()).status(200);
     } else {
         let bodyText = ""
-        if (body.Latitude != undefined || body.Longitude != undefined){
-            urlPos = convertLatLongToUrl(Latitude,Longitude,"z20")
+        if (body.Latitude !== undefined || body.Longitude !== undefined){
+            let urlPos = convertLatLongToUrl(body.Latitude, body.Longitude ,"z20")
             // messageTwilio = new MessagingResponse().message('THanks for your POsition');
             // res.set('Content-Type', 'text/xml');
             // res.send(messageTwilio.toString()).status(200);
@@ -98,7 +101,7 @@ app.post('/whatsapp', async (req, res) => {
         }else{
             bodyText = body.Body;
         }
-            
+        console.log(bodyText)
         directLine.postActivity({
             from: { id: body.From, name: body.From.replace("whatsapp:","") },
             type: 'message',
@@ -126,21 +129,37 @@ app.post('/whatsapp', async (req, res) => {
                         }
                     }
                     try {
+                        
+
                         console.log("received message ", message);
                         console.log(message.text)
                         messageTwilio = new MessagingResponse().message(message.text);
+                        if (isUrl(message.text)){
+                            messageTwilio.media(message.text);
+                        }
                         res.set('Content-Type', 'text/xml');
                         res.send(messageTwilio.toString()).status(200);
                     } catch (error) {
-                        console.log(error)
-                        client.messages
-                        .create({
-                            // mediaUrl: ['https://images.unsplash.com/photo-1545093149-618ce3bcf49d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=668&q=80'],
-                            from:process.env.TWILIO_PHONE,
-                            body: message.text,
-                            to: myPhone
-                        })
-                        .then(message => console.log(message.sid));
+                        console.log(error);
+                        if (isUrl(message.text)){
+                            client.messages
+                            .create({
+                                mediaUrl: [message.text],
+                                from:process.env.TWILIO_PHONE,
+                                body: message.text,
+                                to: myPhone
+                            })
+                            .then(message => console.log(message.sid));
+                        }else{
+                            client.messages
+                            .create({
+                                from:process.env.TWILIO_PHONE,
+                                body: message.text,
+                                to: myPhone
+                            })
+                            .then(message => console.log(message.sid));
+                        }
+
 
                     }
                 });

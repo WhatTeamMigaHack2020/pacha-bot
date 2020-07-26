@@ -24,9 +24,13 @@ class ConsumidorRealizarPedidoDialog extends ComponentDialog{
         return await stepContext.prompt(MAP_PROMPT, 'Por favor envie su ubicación');
     }
     async confirmStep(stepContext) {
-        console.log(stepContext.result)
+        console.log(stepContext)
+        let valueURL = stepContext.values.ubicacion
+        if (stepContext.context._activity.channelId == "telegram"){
+            valueURL= convertLatLongToUrl(stepContext.context._activity.channelData.message.location.latitude,stepContext.context._activity.channelData.message.location.longitude, '15z')
+        }
         stepContext.values.ubicacion = stepContext.result;
-        await stepContext.context.sendActivity(stepContext.values.ubicacion);
+        await stepContext.context.sendActivity(valueURL);
         return await stepContext.prompt(CHOICE_PROMPT, {
             prompt: "Es Correcto?",
             choices:  ChoiceFactory.toChoices(["Si", "No"])
@@ -45,10 +49,19 @@ class ConsumidorRealizarPedidoDialog extends ComponentDialog{
     }
 
     async mapPromptValidator(promptContext) {
-        // This condition is our validation rule. You can also change the value at this point.
-        if (promptContext.recognized.succeeded){
+        let dataURL= ""
+        if (promptContext.context._activity.channelId == "telegram"){
+            console.log(promptContext.context._activity.channelData.message.location);
+            if (promptContext.context._activity.channelData.message.location == undefined)
+                return false;
+            dataURL  = convertLatLongToUrl(promptContext.context._activity.channelData.message.location.latitude,promptContext.context._activity.channelData.message.location.longitude, '15z')
+        }
+        if (promptContext.recognized.succeeded ){
+            dataURL = promptContext.recognized.value
+        }
+        if (promptContext.recognized.succeeded || promptContext.context._activity.channelId == "telegram"){
             console.log(promptContext.recognized.value)
-            let map = await convertUrlToLatLong(promptContext.recognized.value)
+            let map = await convertUrlToLatLong(dataURL)
             console.log(map)
             if (map != null){
                 if (map.Lat != null && map.Long != null){

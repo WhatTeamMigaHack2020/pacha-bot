@@ -19,11 +19,11 @@ const USER_PROFILE = 'USER_PROFILE';
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const WATERFALL_DIALOG = 'WATERFALL_DIALOG';
-
+const MAIN_DIALOG = "MAIN_DIALOG"
 const { formaterTextOptions } =require ("./formaterArray");
 class MainDialog extends ComponentDialog{
     constructor(userState){
-        super("mainDialog");
+        super(MAIN_DIALOG);
         this.userProfile = userState.createProperty(USER_PROFILE);
         this.tipoUsuario = ["Proveedor", "Consumidor"]
         this.addDialog(new ConsumidorDialog());
@@ -82,7 +82,7 @@ class MainDialog extends ComponentDialog{
             }
         }else{
             await stepContext.context.sendActivity('Ingrese nuevamente');
-            return await stepContext.endDialog();
+            return await stepContext.replaceDialog(MAIN_DIALOG);
         }
     }
 

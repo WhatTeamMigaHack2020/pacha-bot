@@ -14,14 +14,18 @@ const { WelcomeBot } = require('./bots/mainBot');
 const { MainDialog } = require('./dialogs/mainDialogs');
 const {isUrl} = require("./dialogs/formaterUrlGPS")
 const { url } = require('inspector');
+//const {clientMongo} = require("./models/dbPacha")
 
 const app = express()
 const port = process.env.port || process.env.PORT || 3978
-
+// console.log(clientMongo)
 
 storageTemp = []
 
 app.get('/', (req, res) => res.send(`<iframe src='https://webchat.botframework.com/embed/flask-sample-mongo-bot?s=${process.env.BotSecretID}'  style='min-width: 400px; width: 100%; min-height: 500px;'></iframe>)`));
+app.get('/policy',function(req,res) {
+    res.sendFile(__dirname + '/policy.html');
+  });
 
 const adapter = new BotFrameworkAdapter({
     appId: process.env.MicrosoftAppId,

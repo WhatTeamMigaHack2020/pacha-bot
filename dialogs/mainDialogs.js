@@ -11,7 +11,8 @@ const {
     TextPrompt,
     WaterfallDialog
 } = require('botbuilder-dialogs');
-const { Channels } = require('botbuilder-core');
+// const { Channels } = require('botbuilder-core');
+const { ConsumidorDialog, CONSUMIDOR_DIALOG } = require("./consumidorDialog")
 const {UserProfile} = require("../models/userProfile");
 
 const USER_PROFILE = 'USER_PROFILE';
@@ -19,17 +20,21 @@ const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const WATERFALL_DIALOG = 'WATERFALL_DIALOG';
 
+const { formaterTextOptions } =require ("./formaterArray");
 class MainDialog extends ComponentDialog{
     constructor(userState){
         super("mainDialog");
         this.userProfile = userState.createProperty(USER_PROFILE);
+        this.tipoUsuario = ["Proveedor", "Consumidor"]
+        this.addDialog(new ConsumidorDialog());
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
         this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT));
 
         this.addDialog( new WaterfallDialog(WATERFALL_DIALOG, [
             this.selectTipo.bind(this),
             this.confirmStep.bind(this),
-            this.summaryStep.bind(this)
+            this.tipoUsuarioStep.bind(this),
+            this.finalStep.bind(this)
         ]));
         this.initialDialogId = WATERFALL_DIALOG;
     }
@@ -44,33 +49,56 @@ class MainDialog extends ComponentDialog{
             await dialogContext.beginDialog(this.id);
         }
     }
-    async selectTipo(step){
-        return await step.prompt(CHOICE_PROMPT, {
-            prompt: "Bienvenido usted es Proveedor o Consumidor",
-            choices:  ChoiceFactory.toChoices(["Proveedor", "Consumidor"])
+    async selectTipo(stepContext){
+        stepContext.values.userInfo = new UserProfile();
+
+        return await stepContext.prompt(CHOICE_PROMPT, {
+            prompt: `Bienvenido usted es?\n\n ${formaterTextOptions(this.tipoUsuario)}`,
+            choices:  ChoiceFactory.toChoices(this.tipoUsuario)
         });
     }
-    async confirmStep(step) {
-        step.values.tipo = step.result.value;
-        return await step.prompt(CHOICE_PROMPT, {
+    async confirmStep(stepContext) {
+        stepContext.values.userInfo.tipo = stepContext.result.value;
+        return await stepContext.prompt(CHOICE_PROMPT, {
             prompt: "Es Correcto?",
             choices:  ChoiceFactory.toChoices(["Si", "No"])
         });
     }
-    async summaryStep(step) {
-        if (step.result.value === "Si") {
+    async tipoUsuarioStep(stepContext) {
+        if (stepContext.result.value === "Si") {
             // Get the current profile object from user state.
-            const userProfile = await this.userProfile.get(step.context, new UserProfile());
-            userProfile.tipo = step.values.tipo;
-            console.log(userProfile)
-            let msg = `Usted esta seleccionado como ${ userProfile.tipo } `;
-            msg += '.';
-            await step.context.sendActivity(msg);
-        } else {
-            await step.context.sendActivity('Thanks. Your profile will not be kept.');
+            console.log(stepContext.values)
+            switch(stepContext.values.userInfo.tipo){
+                case "Proveedor":
+                    await stepContext.context.sendActivity('Módulo del proveedor en desarrollo');
+                    return await stepContext.next()
+                case "Consumidor":
+                    return await stepContext.beginDialog(CONSUMIDOR_DIALOG);
+                default:
+                    await stepContext.context.sendActivity('No se encontro');
+                    console.log(stepContext.values)
+                    return await stepContext.next()
+                    
+            }
+        }else{
+            await stepContext.context.sendActivity('Ingrese nuevamente');
+            return await stepContext.endDialog();
         }
-        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is the end.
-        return await step.endDialog();
+    }
+
+    async finalStep(stepContext) {
+        const userProfile = stepContext.values.userInfo;
+        userProfile.tipoConsumidor = stepContext.result;
+        switch (userProfile.tipo){
+            case "Proveedor":
+                await stepContext.context.sendActivity(`Gracias, vuelva prontos ${userProfile.tipo}`);
+                break;
+            case "Consumidor":
+                await stepContext.context.sendActivity(`Gracias, vuelva prontos ${userProfile.tipo} ${userProfile.tipoConsumidor}!`);
+                break;
+        }
+        // await this.userProfileAccessor.set(stepContext.context, userInfo);
+        return await stepContext.endDialog();
     }
 }
 module.exports.MainDialog = MainDialog;

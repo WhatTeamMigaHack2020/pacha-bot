@@ -17,10 +17,10 @@ class WelcomeBot extends ActivityHandler {
         // this.userState = userState;
 
         this.onMessage(async (context, next) => {
-            console.log("context##onMessage")
-            console.log(context.activity)
-            console.log(context.activity.membersAdded)
-            console.log("context##onMessage")
+            // console.log("context##onMessage")
+            // console.log(context.activity)
+            // console.log(context.activity.membersAdded)
+            // console.log("context##onMessage")
             await this.dialog.run(context,this.dialogState);
             await next();
         });

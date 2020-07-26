@@ -25,7 +25,7 @@ class MainDialog extends ComponentDialog{
     constructor(userState){
         super("mainDialog");
         this.userProfile = userState.createProperty(USER_PROFILE);
-        this.tipoUsuario = ["Proveedor", "Consumidor"]
+        this.tipoUsuario = ["Soy productor 📤", "Soy consumidor 📥"]
         this.addDialog(new ConsumidorDialog());
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
         this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT));
@@ -53,7 +53,7 @@ class MainDialog extends ComponentDialog{
         stepContext.values.userInfo = new UserProfile();
 
         return await stepContext.prompt(CHOICE_PROMPT, {
-            prompt: `Bienvenido usted es?\n\n ${formaterTextOptions(this.tipoUsuario)}`,
+            prompt: `Hola soy Pacha y estoy aqui para ayudarte 👩🏼‍🔧 \n\n ${formaterTextOptions(this.tipoUsuario)}`,
             choices:  ChoiceFactory.toChoices(this.tipoUsuario)
         });
     }
